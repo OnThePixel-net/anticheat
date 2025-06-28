@@ -81,7 +81,8 @@ public class KillauraManualCheck extends ManualCheck {
                         player.getLatency(),
                         GameMode.SURVIVAL,
                         null,
-                        null));
+                        null,
+                        0));
 
         player.sendPacket(addPlayerInfo);
         player.sendPacket(packet);
