@@ -8,6 +8,7 @@ import net.mangolise.anticheat.events.PlayerFlagEvent;
 import net.mangolise.combat.CombatConfig;
 import net.mangolise.combat.MangoCombat;
 import net.mangolise.gamesdk.features.AdminCommandsFeature;
+import net.mangolise.gamesdk.permissions.Permissions;
 import net.mangolise.gamesdk.util.GameSdkUtils;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
@@ -16,7 +17,6 @@ import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
 import net.minestom.server.instance.IChunkLoader;
 import net.minestom.server.instance.Instance;
-import net.minestom.server.permission.Permission;
 import net.minestom.server.timer.TaskSchedule;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public class Test {
         MangoCombat.enableGlobal(CombatConfig.create().withAutomaticRespawn(true));
 
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class, e -> {
-            e.getPlayer().addPermission(new Permission("*"));
+            Permissions.setPermission(e.getPlayer(), "*", true);
             e.setSpawningInstance(instance);
         });
         MinecraftServer.getGlobalEventHandler().addListener(PlayerSpawnEvent.class, e -> {
@@ -58,19 +58,19 @@ public class Test {
                 .withDebugChecks(DEBUG_CHECKS));
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerChatEvent.class, e -> {
-            if (e.getMessage().equals("t")) {
+            if (e.getRawMessage().equals("t")) {
                 e.getPlayer().teleport(e.getPlayer().getPosition().add(10, 10, 0));
             }
 
-            if (e.getMessage().equals("ping")) {
+            if (e.getRawMessage().equals("ping")) {
                 e.getPlayer().sendMessage("Latency: " + e.getPlayer().getLatency());
             }
 
-            if (e.getMessage().equals("dislev")) {
+            if (e.getRawMessage().equals("dislev")) {
                 ac.tempDisableCheck(e.getPlayer(), UnaidedLevitationCheck.class, 100);
             }
 
-            if (e.getMessage().equals("killaura")) {
+            if (e.getRawMessage().equals("killaura")) {
                 MinecraftServer.getSchedulerManager().submitTask(() -> {
                     ac.performManualCheck(KillauraManualCheck.class, e.getPlayer());
                     return TaskSchedule.millis(ThreadLocalRandom.current().nextInt(0, 8000));

@@ -183,7 +183,7 @@ public abstract class ACCheck {
         if (!block.isSolid()) {
             return false;
         }
-        if (block.namespace().value().contains("stair")) {
+        if (block.key().asString().contains("stair")) {
             return false;
         }
         Point start = block.registry().collisionShape().relativeStart();
@@ -197,6 +197,6 @@ public abstract class ACCheck {
     }
 
     public double getRunSpeed(Player p) {
-        return p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getBaseValue() * 1.3;
+        return p.getAttribute(Attribute.MOVEMENT_SPEED).getBaseValue() * 1.3;
     }
 }
