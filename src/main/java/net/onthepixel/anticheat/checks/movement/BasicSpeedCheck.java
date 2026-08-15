@@ -1,7 +1,7 @@
-package net.mangolise.anticheat.checks.movement;
+package net.onthepixel.anticheat.checks.movement;
 
-import net.mangolise.anticheat.ACCheck;
-import net.mangolise.anticheat.Tuple;
+import net.onthepixel.anticheat.ACCheck;
+import net.onthepixel.anticheat.Sample;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
@@ -23,7 +23,7 @@ public class BasicSpeedCheck extends ACCheck {
     private static final int AVERAGE_TIME_PERIOD_MS = 1000;
     private static final int MIN_SAMPLE_SIZE = 5;
 
-    private final Tag<List<Tuple<Long, Pos>>> PLAYER_DETAILS_TAG = Tag.<List<Tuple<Long, Pos>>>Transient("anticheat_basicspeed_player_details").defaultValue(ArrayList::new);
+    private static final Tag<List<Sample<Pos>>> PLAYER_DETAILS_TAG = Tag.<List<Sample<Pos>>>Transient("anticheat_basicspeed_player_details").defaultValue(ArrayList::new);
 
     public BasicSpeedCheck() {
         super("BasicSpeed");
@@ -56,37 +56,18 @@ public class BasicSpeedCheck extends ACCheck {
             return;
         }
 
-        List<Tuple<Long, Pos>> details = p.getTag(PLAYER_DETAILS_TAG);
-
-        // Check if there's any outliers
-//        double sum = 0;
-//        double sumOfSquares = 0;
-//        for (Tuple<Long, Pos> detail : details) {
-//            sum += detail.getSecond().x();
-//            sumOfSquares += Math.pow(detail.getSecond().x(), 2);
-//        }
-
-        // Is this check needed? It was only here to combat tp
-//        final double mean = sum / details.size();
-//        final double standardDeviation = Math.sqrt((sumOfSquares - (Math.pow(sum, 2) / details.size())) / details.size());
-
-//        if (details.stream().anyMatch(tuple -> Math.abs(tuple.getSecond().x() - mean) > standardDeviation * 2)) {
-//            debug(p, "outlier detected in speed, IGNORING ALL DATA");
-//            p.getTag(PLAYER_DETAILS_TAG).clear();
-//            return;
-//        }
-
+        List<Sample<Pos>> details = p.getTag(PLAYER_DETAILS_TAG);
         Pos to = e.getNewPosition();
 
-        details.removeIf(tuple -> tuple.getFirst() < System.currentTimeMillis() - SAMPLE_TIME);
-        details.add(new Tuple<>(System.currentTimeMillis(), to));
+        Sample.pruneOlderThan(details, SAMPLE_TIME);
+        details.add(Sample.now(to));
         p.setTag(PLAYER_DETAILS_TAG, details);
 
-        Pos from = details.getFirst().getSecond();
-        long timeSinceFrom = System.currentTimeMillis() - details.getFirst().getFirst();
+        Sample<Pos> oldest = details.getFirst();
+        Pos from = oldest.value();
+        long timeSinceFrom = System.currentTimeMillis() - oldest.timeMillis();
 
-        int averagingPeriod = AVERAGE_TIME_PERIOD_MS;
-        if (timeSinceFrom < averagingPeriod) {
+        if (timeSinceFrom < AVERAGE_TIME_PERIOD_MS) {
             debug(p, "averaging time not met");
             return;  // Average must be over the averaging period.
         }
@@ -96,12 +77,9 @@ public class BasicSpeedCheck extends ACCheck {
             return;
         }
 
-        double horizontalDistance = Math.sqrt(Math.pow(to.x() - from.x(), 2) + Math.pow(to.z() - from.z(), 2));
-        double speed = horizontalDistance / (timeSinceFrom / (double) averagingPeriod);
-        double expectedMaxWalkSpeed = 4.317 * (getRunSpeed(p) / 0.2);
-        expectedMaxWalkSpeed = expectedMaxWalkSpeed * 1.3 * 1.5;
-
-        //p.sendActionBar(Component.text("Speed: " + String.format("%.2f", speed) + " Expected: " + String.format("%.2f", expectedMaxWalkSpeed)));
+        double horizontalDistance = Math.hypot(to.x() - from.x(), to.z() - from.z());
+        double speed = horizontalDistance / (timeSinceFrom / (double) AVERAGE_TIME_PERIOD_MS);
+        double expectedMaxWalkSpeed = 4.317 * (getRunSpeed(p) / 0.2) * 1.3 * 1.5;
 
         if (speed > expectedMaxWalkSpeed + THRESHOLD) {
             float certainty = (float) Math.min(1f, (speed - expectedMaxWalkSpeed) / 2f);

@@ -1,0 +1,42 @@
+name: Publish to GitHub Packages
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.0.0)'
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Release tags may be written as "v1.0.0", the published version must not carry the "v"
+      - name: Resolve version
+        id: version
+        run: |
+          raw="${{ github.event.inputs.version || github.event.release.tag_name }}"
+          echo "value=${raw#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish
+        run: ./gradlew publishMavenPublicationToGitHubPackagesRepository -Pversion=${{ steps.version.outputs.value }}
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

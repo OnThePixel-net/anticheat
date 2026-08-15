@@ -1,6 +1,6 @@
-package net.mangolise.anticheat.checks.movement;
+package net.onthepixel.anticheat.checks.movement;
 
-import net.mangolise.anticheat.ACCheck;
+import net.onthepixel.anticheat.ACCheck;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
@@ -10,8 +10,8 @@ import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 
 public class UnaidedLevitationCheck extends ACCheck {
-    private final static int THRESHOLD = 3;
-    private final Tag<Double> BLOCKS_RAISED_TAG = Tag.Double("anticheat_unaidedlev_raisedblocks").defaultValue(0D);
+    private static final int THRESHOLD = 3;
+    private static final Tag<Double> BLOCKS_RAISED_TAG = Tag.Double("anticheat_unaidedlev_raisedblocks").defaultValue(0D);
 
     public UnaidedLevitationCheck() {
         super("UnaidedLevitation");
@@ -44,13 +44,13 @@ public class UnaidedLevitationCheck extends ACCheck {
             return;
         }
 
-        Pos from = e.getPlayer().getPosition();
+        Pos from = p.getPosition();
         Pos to = e.getNewPosition();
         if (from.y() > to.y()) {
             return;
         }
 
-        // add the distance between the two y values to the hashmap
+        // accumulate how far they have risen since they last touched the ground
         double newRaised = p.updateAndGetTag(BLOCKS_RAISED_TAG, old -> old + (to.y() - from.y()));
 
         // check if the player has gone up more than 3 blocks without going down then fail

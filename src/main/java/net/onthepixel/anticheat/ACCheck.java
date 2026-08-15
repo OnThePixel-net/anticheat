@@ -1,6 +1,6 @@
-package net.mangolise.anticheat;
+package net.onthepixel.anticheat;
 
-import net.mangolise.anticheat.events.PlayerFlagEvent;
+import net.onthepixel.anticheat.events.PlayerFlagEvent;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.BlockVec;
@@ -13,13 +13,16 @@ import net.minestom.server.instance.block.Block;
 import net.minestom.server.potion.PotionEffect;
 import net.minestom.server.timer.TaskSchedule;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ACCheck {
     private final String name;
-    protected MangoAC.Config config;
-    protected MangoAC ac;
-    protected final List<UUID> disabledPlayers = new ArrayList<>();
+    protected PixelAC.Config config;
+    protected PixelAC ac;
+    protected final Set<UUID> disabledPlayers = ConcurrentHashMap.newKeySet();
 
     private static final Set<Integer> NO_FALL_DAMAGE_BLOCKS = Set.of(
             Block.WATER.id(),
@@ -47,7 +50,7 @@ public abstract class ACCheck {
         this.name = name;
     }
 
-    public void enable(MangoAC ac, MangoAC.Config config) {
+    public void enable(PixelAC ac, PixelAC.Config config) {
         this.config = config;
         this.ac = ac;
         register();
@@ -97,10 +100,10 @@ public abstract class ACCheck {
 
         // get the rounded points for all four corners and add them to a set to remove duplicates
         // center isn't needed because the player is less a block wide
-        points.add(new BlockVec(playerLocation.add(box.minX(), box.minY(), box.minZ())));
-        points.add(new BlockVec(playerLocation.add(box.minX(), box.minY(), box.maxZ())));
-        points.add(new BlockVec(playerLocation.add(box.maxX(), box.minY(), box.minZ())));
-        points.add(new BlockVec(playerLocation.add(box.maxX(), box.minY(), box.maxZ())));
+        points.add(playerLocation.add(box.minX(), box.minY(), box.minZ()).asBlockVec());
+        points.add(playerLocation.add(box.minX(), box.minY(), box.maxZ()).asBlockVec());
+        points.add(playerLocation.add(box.maxX(), box.minY(), box.minZ()).asBlockVec());
+        points.add(playerLocation.add(box.maxX(), box.minY(), box.maxZ()).asBlockVec());
 
         Set<Integer> blockIds = new HashSet<>(points.size());
         for (Point point : points) {
@@ -137,31 +140,20 @@ public abstract class ACCheck {
             return true;
         }
         //TODO: Riptide
-        if (p.isAllowFlying()) {
-            return true;
-        }
-        if (p.isFlyingWithElytra()) {
-            return true;
-        }
-        if (p.getVehicle() != null) {
-            return true;
-        }
-        if (p.hasEffect(PotionEffect.SPEED)) {
-            return true;
-        }
-        if (p.hasEffect(PotionEffect.JUMP_BOOST)) {
-            return true;
-        }
-        if (p.hasEffect(PotionEffect.DOLPHINS_GRACE)) {
-            return true;
-        }
-        if (isInBubbleColumn(p)) {
+        if (p.isAllowFlying() ||
+                p.isFlyingWithElytra() ||
+                p.getVehicle() != null ||
+                p.hasEffect(PotionEffect.SPEED) ||
+                p.hasEffect(PotionEffect.JUMP_BOOST) ||
+                p.hasEffect(PotionEffect.DOLPHINS_GRACE) ||
+                isInBubbleColumn(p)) {
             return true;
         }
 
         if (isOnGround(p)) {
             Set<Integer> standingOn = getBlocksPlayerIsStandingOn(p);
-            if (standingOn.contains(Block.SOUL_SAND.id()) || standingOn.contains(Block.SOUL_SOIL.id()) && ACUtils.isUsingSoulSpeed(p)) {
+            boolean onSoulBlock = standingOn.contains(Block.SOUL_SAND.id()) || standingOn.contains(Block.SOUL_SOIL.id());
+            if (onSoulBlock && ACUtils.isUsingSoulSpeed(p)) {
                 return true;
             }
 

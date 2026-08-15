@@ -1,4 +1,4 @@
-package net.mangolise.anticheat;
+package net.onthepixel.anticheat;
 
 import net.minestom.server.entity.Player;
 
