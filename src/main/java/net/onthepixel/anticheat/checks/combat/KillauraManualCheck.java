@@ -1,12 +1,13 @@
-package net.mangolise.anticheat.checks.combat;
+package net.onthepixel.anticheat.checks.combat;
 
-import net.mangolise.anticheat.ManualCheck;
+import net.onthepixel.anticheat.ManualCheck;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.PlayerPacketEvent;
-import net.minestom.server.network.packet.client.play.ClientInteractEntityPacket;
+import net.minestom.server.network.packet.client.play.ClientAttackPacket;
 import net.minestom.server.network.packet.server.play.DestroyEntitiesPacket;
 import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket;
 import net.minestom.server.network.packet.server.play.SpawnEntityPacket;
@@ -21,6 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class KillauraManualCheck extends ManualCheck {
     private static final int HITS_THRESHOLD = 7;
+    private static final String DUMMY_NAME = "Technoblade";
     private static final Tag<Integer> DUMMY_ID = Tag.Integer("anticheat_killaura_dummyid");
     private static final Tag<Integer> DUMMY_HITS = Tag.Integer("anticheat_killaura_dummyhits").defaultValue(0);
 
@@ -34,19 +36,12 @@ public class KillauraManualCheck extends ManualCheck {
     }
 
     private void processPacket(@NotNull PlayerPacketEvent event) {
-        if (!(event.getPacket() instanceof ClientInteractEntityPacket interact)) {
+        if (!(event.getPacket() instanceof ClientAttackPacket attack)) {
             return;
         }
 
-        if (!(interact.type() instanceof ClientInteractEntityPacket.Attack)) {
-            return;
-        }
-
-        if (!event.getPlayer().hasTag(DUMMY_ID)) {
-            return;
-        }
-
-        if (event.getPlayer().getTag(DUMMY_ID) != interact.targetId()) {
+        Integer dummyId = event.getPlayer().getTag(DUMMY_ID);
+        if (dummyId == null || dummyId != attack.targetId()) {
             return;
         }
 
@@ -64,25 +59,26 @@ public class KillauraManualCheck extends ManualCheck {
         SpawnEntityPacket packet = new SpawnEntityPacket(
                 id,
                 uuid,
-                EntityType.PLAYER.id(),
+                EntityType.PLAYER,
                 player.getPosition().add(x, 0.2, z),
                 0.2f,
                 0,
-                (short) 0, (short) 0, (short) 0);
+                Vec.ZERO);
         player.setTag(DUMMY_ID, id);
 
         PlayerInfoUpdatePacket addPlayerInfo = new PlayerInfoUpdatePacket(
                 PlayerInfoUpdatePacket.Action.ADD_PLAYER,
                 new PlayerInfoUpdatePacket.Entry(
                         uuid,
-                        "Technoblade",
+                        DUMMY_NAME,
                         List.of(),
                         true,
                         player.getLatency(),
                         GameMode.SURVIVAL,
                         null,
                         null,
-                        0));
+                        0,
+                        false));
 
         player.sendPacket(addPlayerInfo);
         player.sendPacket(packet);
@@ -91,8 +87,7 @@ public class KillauraManualCheck extends ManualCheck {
 
         MinecraftServer.getSchedulerManager().scheduleTask(() -> {
             player.removeTag(DUMMY_ID);
-            Integer hits = player.getAndSetTag(DUMMY_HITS, 0);
-            assert hits != null;
+            int hits = player.getAndSetTag(DUMMY_HITS, 0);
 
             float certainty = 0f;
             if (hits >= HITS_THRESHOLD) {

@@ -1,10 +1,10 @@
-package net.mangolise.anticheat;
+package net.onthepixel.anticheat;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.mangolise.anticheat.checks.combat.KillauraManualCheck;
-import net.mangolise.anticheat.checks.movement.UnaidedLevitationCheck;
-import net.mangolise.anticheat.events.PlayerFlagEvent;
+import net.onthepixel.anticheat.checks.combat.KillauraManualCheck;
+import net.onthepixel.anticheat.checks.movement.UnaidedLevitationCheck;
+import net.onthepixel.anticheat.events.PlayerFlagEvent;
 import net.mangolise.combat.CombatConfig;
 import net.mangolise.combat.MangoCombat;
 import net.mangolise.gamesdk.features.AdminCommandsFeature;
@@ -15,7 +15,7 @@ import net.minestom.server.coordinate.Pos;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
-import net.minestom.server.instance.IChunkLoader;
+import net.minestom.server.instance.ChunkLoader;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.timer.TaskSchedule;
 
@@ -38,7 +38,7 @@ public class Test {
 
         MinecraftServer server = MinecraftServer.init();
 
-        IChunkLoader chunkLoader = GameSdkUtils.getPolarLoaderFromResource("test-world.polar");
+        ChunkLoader chunkLoader = GameSdkUtils.getPolarLoaderFromResource("test-world.polar");
         Instance instance = MinecraftServer.getInstanceManager().createInstanceContainer(chunkLoader);
         instance.enableAutoChunkLoad(true);
 
@@ -54,7 +54,7 @@ public class Test {
             e.getPlayer().teleport(spawnPoint);
         });
 
-        MangoAC ac = new MangoAC(MangoAC.Config.create()
+        PixelAC ac = new PixelAC(PixelAC.Config.create()
                 .withDebugChecks(DEBUG_CHECKS));
 
         MinecraftServer.getGlobalEventHandler().addListener(PlayerChatEvent.class, e -> {

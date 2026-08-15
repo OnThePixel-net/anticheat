@@ -1,12 +1,12 @@
-package net.mangolise.anticheat.checks.combat;
+package net.onthepixel.anticheat.checks.combat;
 
-import net.mangolise.anticheat.ACCheck;
+import net.onthepixel.anticheat.ACCheck;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.entity.EntityAttackEvent;
 
 public class ReachCheck extends ACCheck {
-    private final static double THRESHOLD = 5;
+    private static final double THRESHOLD = 5;
 
     public ReachCheck() {
         super("Reach");

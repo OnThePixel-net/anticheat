@@ -1,2 +1,1 @@
-rootProject.name = "mango-anticheat"
-
+rootProject.name = "onthepixel-anticheat"
