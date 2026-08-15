@@ -28,14 +28,7 @@ Built against Minestom `2026.07.01-26.1.2` (Minecraft 26.1.2), which requires **
 
 ### Dependency
 
-Releases are published to **GitHub Packages**. GitHub requires authentication for Maven
-downloads even from public repositories, so you need a personal access token with the
-`read:packages` scope. Never commit it — put it in `~/.gradle/gradle.properties`:
-
-```properties
-gpr.user=your-github-username
-gpr.key=ghp_yourTokenHere
-```
+Releases are published to **GitHub Packages**.
 
 build.gradle.kts
 ```kotlin
